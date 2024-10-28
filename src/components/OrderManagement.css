@@ -1,105 +1,158 @@
 .order-management {
-    display: grid;
-    gap: 1rem;
+  display: grid;
+  gap: 2rem;
+  padding: 2rem;
+}
+
+.card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  padding: 1.5rem;
+}
+
+.card-header {
+  background-color: #f0f0f0;
+  padding: 1.5rem;
+  border-radius: 16px 16px 0 0;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.card-content {
+  padding: 1.5rem;
+  font-size: 1.5rem;
+}
+
+.button-group {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  justify-content: center;
+}
+
+button {
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.5rem;
+  width: 150px;
+}
+
+
+button.apple {
+  background-color: #ff6347;
+}
+
+button.banana {
+  background-color: #ffd700;
+  color: black;
+}
+
+button:hover {
+  filter: brightness(0.9);
+}
+
+button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.item-list {
+  margin-bottom: 1.5rem;
+}
+
+.item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.kitchen-item {
+  border-radius: 16px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+}
+
+.kitchen-item.apple {
+  background-color: #ffc7c7;
+  border-left: 8px solid #ff6347;
+}
+
+.kitchen-item.banana {
+  background-color: #fffec7;
+  border-left: 8px solid #ffd700;
+}
+
+.total {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  margin-bottom: 2rem;
+  font-size: 1.5rem;
+}
+
+.confirm-button {
+  background-color: blue;
+  width: 100%;
+  margin-bottom: 1rem;
+  padding: 1.25rem;
+  font-size: 1.5rem;
+}
+
+.clear-button {
+  width: 100%;
+  background-color: #6c757d;
+  padding: 1.25rem;
+  font-size: 1.5rem;
+}
+
+.status-badge {
+  background-color: #28a745;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 1.25rem;
+  margin-right: 1rem;
+}
+
+.serve-button {
+  background-color: #ffc107;
+  color: #000000;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-size: 1.5rem;
+}
+
+.kitchen-total {
+  text-align: right;
+  font-weight: bold;
+  margin-top: 2rem;
+  font-size: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .order-management {
+    grid-template-columns: 1fr 1fr;
   }
-  
-  .card {
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
+} 
+
+@media (min-width: 1024px) {
+  .order-management {
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
   }
-  
-  .card-header {
-    background-color: #f0f0f0;
-    padding: 1rem;
-  }
-  
-  .card-title {
-    margin: 0;
-    font-size: 1.25rem;
-    font-weight: bold;
-  }
-  
-  .card-content {
-    padding: 1rem;
-  }
-  
-  .button-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-  }
-  
-  button {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 1rem;
-  }
-  
-  button:hover {
-    background-color: #0056b3;
-  }
-  
-  button:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
-  }
-  
-  .item-list {
-    margin-bottom: 1rem;
-  }
-  
-  .item, .kitchen-item {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 0.5rem;
-  }
-  
-  .total {
-    display: flex;
-    justify-content: space-between;
-    font-weight: bold;
-    margin-bottom: 1rem;
-  }
-  
-  .confirm-button {
-    width: 100%;
-    margin-bottom: 0.5rem;
-  }
-  
-  .clear-button {
-    width: 100%;
-    background-color: #6c757d;
-  }
-  
-  .status-badge {
-    background-color: #28a745;
-    color: white;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.875rem;
-    margin-right: 0.5rem;
-  }
-  
-  .serve-button {
-    background-color: #ffc107;
-    color: #000000;
-  }
-  
-  .kitchen-total {
-    text-align: right;
-    font-weight: bold;
-    margin-top: 1rem;
-  }
-  
-  @media (min-width: 768px) {
-    .order-management {
-      grid-template-columns: 1fr 1fr;
-    }
-  }
+}

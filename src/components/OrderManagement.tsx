@@ -8,7 +8,6 @@ interface OrderItem {
   id: number
   item: 'リンゴ' | 'バナナ'
   price: number
-  status: string
   ticketNumber: number
 }
 
@@ -37,7 +36,7 @@ export default function OrderManagement() {
   const addTempItem = (item: 'リンゴ' | 'バナナ', price: number) => {
     const ticketNumber = getNextAvailableTicket(item)
     if (ticketNumber !== null) {
-      const newItem: OrderItem = { id: Date.now(), item, price, status: '調理中', ticketNumber }
+      const newItem: OrderItem = { id: Date.now(), item, price, ticketNumber }
       setTempOrderItems([...tempOrderItems, newItem])
       setAvailableTickets(prev => ({
         ...prev,
@@ -93,8 +92,8 @@ export default function OrderManagement() {
       </div>
       <div className="card-content">
         <div className="button-group">
-          <button onClick={() => addTempItem('リンゴ', 350)}>リンゴ ¥350</button>
-          <button onClick={() => addTempItem('バナナ', 200)}>バナナ ¥200</button>
+          <button onClick={() => addTempItem('リンゴ', 350)} className='apple' >リンゴ ¥350</button>
+          <button onClick={() => addTempItem('バナナ', 200)} className='banana'>バナナ ¥200</button>
         </div>
         <div className="item-list">
           {tempOrderItems.map((item) => (
@@ -128,31 +127,35 @@ export default function OrderManagement() {
   )
 
   // 調理状況セクションのコンポーネント
-  const KitchenSection = () => (
-    <div className="card">
-      <div className="card-header">
-        <h2 className="card-title">調理状況</h2>
-      </div>
-      <div className="card-content">
-        {orderItems.map((item) => (
-          <div key={item.id} className="kitchen-item">
-            <span>
-              {item.item} #{item.ticketNumber}
-            </span>
-            <div>
-              <span className="status-badge">{item.status}</span>
-              <button className="serve-button" onClick={() => removeItem(item.id)}>
-                渡す
-              </button>
-            </div>
+const KitchenSection = () => (
+  <div className="card">
+    <div className="card-header">
+      <h2 className="card-title">調理状況</h2>
+    </div>
+    <div className="card-content">
+      {orderItems.map((item) => (
+        <div
+          key={item.id}
+          className={`kitchen-item ${item.item === 'リンゴ' ? 'apple' : 'banana'}`}
+        >
+          <span>
+            {item.item} #{item.ticketNumber}
+          </span>
+          <div>
+            
+            <button className="serve-button" onClick={() => removeItem(item.id)}>
+              渡す
+            </button>
           </div>
-        ))}
-        <div className="kitchen-total">
-          <span>調理中: {orderItems.length}</span>
         </div>
+      ))}
+      <div className="kitchen-total">
+        <span>調理中: {orderItems.length}</span>
       </div>
     </div>
-  )
+  </div>
+)
+
 
   return (
     <div className="order-management">
