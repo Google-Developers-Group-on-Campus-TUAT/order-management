@@ -27,7 +27,21 @@ export default function OrderManagement() {
     リンゴ: Array.from({ length: TICKET_COUNT }, (_, i) => i + 1),
     バナナ: Array.from({ length: TICKET_COUNT }, (_, i) => i + 1)
   })
+  const [showOrderSection, setShowOrderSection] = useState<boolean>(true)
+  const [showKitchenSection, setShowKitchenSection] = useState<boolean>(true)
+  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false)
 
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen)
+  }
+
+  const getCardClassName = () => {
+    if (showOrderSection && showKitchenSection) {
+      return 'card'
+    } else {
+      return 'card full-width'
+    }
+  }
   // Supabaseから注文を取得する関数
   const fetchOrdersFromDatabase = async () => {
     const { data, error } = await supabase
@@ -180,7 +194,7 @@ export default function OrderManagement() {
 
   // 注文入力セクションのコンポーネント
   const OrderSection = () => (
-    <div className="card">
+    <div className={getCardClassName()}>
       <div className="card-header">
         <h2 className="card-title">注文入力</h2>
       </div>
@@ -222,7 +236,7 @@ export default function OrderManagement() {
 
   // 調理状況セクションのコンポーネント
   const KitchenSection = () => (
-    <div className="card">
+    <div className={getCardClassName()}>
       <div className="card-header">
         <h2 className="card-title">調理状況</h2>
       </div>
@@ -250,9 +264,23 @@ export default function OrderManagement() {
   )
 
   return (
-    <div className="order-management">
-      <OrderSection />
-      <KitchenSection />
+    <div className="order-management">      
+      <button onClick={toggleMenu} className='hamburger-menu'>
+        ☰
+      </button>
+      {isMenuOpen && (
+         <div className="menu-items">
+          <button onClick={() => setShowOrderSection(!showOrderSection)} className='show-component'>
+            {showOrderSection ? '注文入力を非表示' : '注文入力を表示'}
+          </button>
+          <button onClick={() => setShowKitchenSection(!showKitchenSection)} className='show-component'>
+            {showKitchenSection ? '調理状況を非表示' : '調理状況を表示'}
+          </button>
+        </div>
+      )}
+
+      {showOrderSection && <OrderSection />}
+      {showKitchenSection && <KitchenSection />}
     </div>
   )
 }
