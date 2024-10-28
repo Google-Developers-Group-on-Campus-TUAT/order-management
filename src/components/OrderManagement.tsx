@@ -270,10 +270,10 @@ export default function OrderManagement() {
       </button>
       {isMenuOpen && (
          <div className="menu-items">
-          <button onClick={() => setShowOrderSection(!showOrderSection)} className='show-component'>
+          <button onClick={() => setShowOrderSection(!showOrderSection)} >
             {showOrderSection ? '注文入力を非表示' : '注文入力を表示'}
           </button>
-          <button onClick={() => setShowKitchenSection(!showKitchenSection)} className='show-component'>
+          <button onClick={() => setShowKitchenSection(!showKitchenSection)} >
             {showKitchenSection ? '調理状況を非表示' : '調理状況を表示'}
           </button>
         </div>

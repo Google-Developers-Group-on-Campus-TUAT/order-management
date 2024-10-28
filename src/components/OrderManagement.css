@@ -47,36 +47,31 @@
 .hamburger-menu {
   color: #000000;
   position: fixed;
-  top: 1rem;
-  left: 1rem;
-  background-color: #ffffff;
+  width: 1rem;
+  top: 0;
+  left: 0;
+  background-color: #ffffff70;
   z-index: 101;
 }
-
 
 .menu-items {
   position: fixed;
   top: 0;
   left: 0;
   height: 100%;
-  width: 10%;
-  background-color: #ffffff;
+  width: auto;
+  background-color: #ffffff7c;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
-  padding: 2rem;
-  z-index: 100;
-  transform: translateX(10);
-  transition: transform 0.3s ease-in-out;
 }
 .menu-items button {
+  color: black;
+  background-color: #ffffff7c;
   display: block;
   left: 1rem;
   width: 100%;
   margin-top: 30%;
   margin-bottom: 1rem;
-  padding: 1rem;
-  background-color: #f0f0f0;
   border: none;
-  border-radius: 8px;
   cursor: pointer;
 }
 
