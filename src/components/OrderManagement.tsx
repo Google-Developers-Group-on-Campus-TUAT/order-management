@@ -211,11 +211,11 @@ export default function OrderManagement() {
             <div>
               {confirmingItemId === item.id ? (
                 <button className="confirm-serve-button" onClick={() => removeItem(item.id)}>
-                  本当に？
+                  渡す
                 </button>
               ) : (
                 <button className="serve-button" onClick={() => setConfirmingItemId(item.id)}>
-                  渡す
+                  完成
                 </button>
               )}
             </div>
