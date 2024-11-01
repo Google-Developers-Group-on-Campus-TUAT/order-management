@@ -12,24 +12,18 @@ interface OrderItem {
   ticketNumber: number
 }
 
-interface AvailableTickets {
-  [key: string]: number[]
-}
-
-const TICKET_COUNT = 10 // 札の総数
+const TICKET_COUNT = 50 // 札の総数
 
 export default function OrderManagement() {
   // Stateの型定義
   const [orderItems, setOrderItems] = useState<OrderItem[]>([])
   const [tempOrderItems, setTempOrderItems] = useState<OrderItem[]>([])
   const [tempTotal, setTempTotal] = useState<number>(0)
-  const [availableTickets, setAvailableTickets] = useState<AvailableTickets>({
-    リンゴ: Array.from({ length: TICKET_COUNT }, (_, i) => i + 1),
-    バナナ: Array.from({ length: TICKET_COUNT }, (_, i) => i + 1)
-  })
+  const [nextTicketNumber, setNextTicketNumber] = useState<number>(1)
   const [showOrderSection, setShowOrderSection] = useState<boolean>(true)
   const [showKitchenSection, setShowKitchenSection] = useState<boolean>(true)
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false)
+  const [confirmingItemId, setConfirmingItemId] = useState<number | null>(null)
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen)
@@ -42,6 +36,7 @@ export default function OrderManagement() {
       return 'card full-width'
     }
   }
+
   // Supabaseから注文を取得する関数
   const fetchOrdersFromDatabase = async () => {
     const { data, error } = await supabase
@@ -68,7 +63,6 @@ export default function OrderManagement() {
       const orders = await fetchOrdersFromDatabase()
       if (orders) {
         setOrderItems(orders)
-        updateAvailableTickets(orders)
       }
     }
     loadInitialOrders()
@@ -80,7 +74,6 @@ export default function OrderManagement() {
         const updatedOrders = await fetchOrdersFromDatabase()
         if (updatedOrders) {
           setOrderItems(updatedOrders)
-          updateAvailableTickets(updatedOrders)
         }
       })
       .subscribe()
@@ -90,23 +83,6 @@ export default function OrderManagement() {
       supabase.removeChannel(channel)
     }
   }, [])
-
-  // 利用可能なチケット番号を更新する関数
-  const updateAvailableTickets = (orders: OrderItem[]) => {
-    const usedTickets: AvailableTickets = {
-      リンゴ: [],
-      バナナ: []
-    }
-
-    orders.forEach((order) => {
-      usedTickets[order.item].push(order.ticketNumber)
-    })
-
-    setAvailableTickets({
-      リンゴ: Array.from({ length: TICKET_COUNT }, (_, i) => i + 1).filter(ticket => !usedTickets.リンゴ.includes(ticket)),
-      バナナ: Array.from({ length: TICKET_COUNT }, (_, i) => i + 1).filter(ticket => !usedTickets.バナナ.includes(ticket))
-    })
-  }
 
   // Supabaseへのデータ追加関数
   const addOrderToDatabase = async (orderItems: OrderItem[]) => {
@@ -136,24 +112,12 @@ export default function OrderManagement() {
     }
   }
 
-  // 次の利用可能なチケット番号を取得する関数
-  const getNextAvailableTicket = (item: 'リンゴ' | 'バナナ'): number | null => {
-    return availableTickets[item][0] || null
-  }
-
   // 一時的に注文を追加する関数
   const addTempItem = (item: 'リンゴ' | 'バナナ', price: number) => {
-    const ticketNumber = getNextAvailableTicket(item)
-    if (ticketNumber !== null) {
-      const newItem: OrderItem = { id: Date.now(), item, price, ticketNumber }
-      setTempOrderItems([...tempOrderItems, newItem])
-      setAvailableTickets(prev => ({
-        ...prev,
-        [item]: prev[item].filter(t => t !== ticketNumber)
-      }))
-    } else {
-      alert(`${item}の札が不足しています。`)
-    }
+    const ticketNumber = nextTicketNumber
+    const newItem: OrderItem = { id: Date.now(), item, price, ticketNumber }
+    setTempOrderItems([...tempOrderItems, newItem])
+    setNextTicketNumber(prev => (prev % TICKET_COUNT) + 1)
   }
 
   // 注文を確定する関数
@@ -161,7 +125,6 @@ export default function OrderManagement() {
     await addOrderToDatabase(tempOrderItems)
     const updatedOrders = await fetchOrdersFromDatabase()
     setOrderItems(updatedOrders)
-    updateAvailableTickets(updatedOrders)
     setTempOrderItems([])
   }
 
@@ -170,19 +133,11 @@ export default function OrderManagement() {
     await removeOrderFromDatabase(id)
     const updatedOrders = await fetchOrdersFromDatabase()
     setOrderItems(updatedOrders)
-    updateAvailableTickets(updatedOrders)
+    setConfirmingItemId(null)
   }
 
   // 仮の注文をクリアする関数
   const clearTempOrder = () => {
-    tempOrderItems.forEach(item => {
-      if (item.item === 'リンゴ' || item.item === 'バナナ') {
-        setAvailableTickets(prev => ({
-          ...prev,
-          [item.item]: [...prev[item.item], item.ticketNumber].sort((a, b) => a - b)
-        }))
-      }
-    })
     setTempOrderItems([])
   }
 
@@ -236,7 +191,7 @@ export default function OrderManagement() {
 
   // 調理状況セクションのコンポーネント
   const KitchenSection = () => (
-    <div className={getCardClassName()}>
+    <div className={getCardClassName()} onClick={() => setConfirmingItemId(null)}>
       <div className="card-header">
         <h2 className="card-title">調理状況</h2>
       </div>
@@ -248,14 +203,21 @@ export default function OrderManagement() {
           <div
             key={item.id}
             className={`kitchen-item ${item.item === 'リンゴ' ? 'apple' : 'banana'}`}
+            onClick={(e) => e.stopPropagation()}
           >
             <span>
               {item.item} #{item.ticketNumber}
             </span>
             <div>
-              <button className="serve-button" onClick={() => removeItem(item.id)}>
-                渡す
-              </button>
+              {confirmingItemId === item.id ? (
+                <button className="confirm-serve-button" onClick={() => removeItem(item.id)}>
+                  本当に？
+                </button>
+              ) : (
+                <button className="serve-button" onClick={() => setConfirmingItemId(item.id)}>
+                  渡す
+                </button>
+              )}
             </div>
           </div>
         ))}

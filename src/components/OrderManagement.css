@@ -11,14 +11,12 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   overflow: hidden;
   padding: 1.5rem;
-  flex-grow: 1;
   transition: all 0.3s ease-in-out;
 }
 
 .card.full-width {
   grid-column: span 2;
 }
-
 
 .card-header {
   background-color: #f0f0f0;
@@ -39,9 +37,15 @@
 
 .button-group {
   display: flex;
-  gap: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
   margin-bottom: 2rem;
   justify-content: center;
+}
+
+.button-group button {
+  flex: 1 1 calc(50% - 1rem);
+  max-width: 100%;
 }
 
 .hamburger-menu {
@@ -74,7 +78,6 @@
   border: none;
   cursor: pointer;
 }
-
 
 button {
   color: white;
@@ -129,11 +132,12 @@ button:disabled {
 .kitchen-item {
   border-radius: 16px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  padding: 1.5rem;
+  padding: 1rem;
   display: flex;
+  flex-direction: column;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
+  align-items: stretch;
+  margin-bottom: 1rem;
   font-size: 1.5rem;
 }
 
@@ -145,6 +149,11 @@ button:disabled {
 .kitchen-item.banana {
   background-color: #fffec7;
   border-left: 8px solid #ffd700;
+}
+
+.kitchen-item button {
+  width: 100%;
+  margin-top: 1rem;
 }
 
 .total {
@@ -185,8 +194,17 @@ button:disabled {
   padding: 1rem 2rem;
   border-radius: 8px;
   font-size: 1.5rem;
+  width: 100%;
 }
-
+.confirm-serve-button{
+  background-color: #ff6912;
+  color: #ffffff;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-size: 1.5rem;
+  width: 100%;
+  margin-top: 1rem;
+}
 .kitchen-total {
   text-align: right;
   font-weight: bold;
@@ -194,10 +212,10 @@ button:disabled {
   font-size: 1.5rem;
 }
 
-
 @media (min-width: 768px) {
   .order-management {
     grid-template-columns: 1fr 1fr;
+    align-items: start;
   }
 }
 
@@ -205,5 +223,24 @@ button:disabled {
   .order-management {
     grid-template-columns: 1fr 1fr;
     gap: 3rem;
+    align-items: start;
+  }
+}
+
+@media (max-width: 767px) {
+  .button-group {
+    gap: 0.5rem;
+  }
+  .button-group button {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+  .kitchen-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .kitchen-item button {
+    width: 100%;
+    margin-top: 1rem;
   }
 }
