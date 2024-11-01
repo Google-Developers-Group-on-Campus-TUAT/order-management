@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabaseClient'
 import './OrderManagement.css'
 
 // 型定義
@@ -11,70 +12,132 @@ interface OrderItem {
   ticketNumber: number
 }
 
-interface AvailableTickets {
-  [key: string]: number[]
-}
-
-const TICKET_COUNT = 10 // 札の総数
+const TICKET_COUNT = 50 // 札の総数
 
 export default function OrderManagement() {
   // Stateの型定義
   const [orderItems, setOrderItems] = useState<OrderItem[]>([])
   const [tempOrderItems, setTempOrderItems] = useState<OrderItem[]>([])
   const [tempTotal, setTempTotal] = useState<number>(0)
-  const [availableTickets, setAvailableTickets] = useState<AvailableTickets>({
-    リンゴ: Array.from({ length: TICKET_COUNT }, (_, i) => i + 1),
-    バナナ: Array.from({ length: TICKET_COUNT }, (_, i) => i + 1)
-  })
+  const [nextTicketNumber, setNextTicketNumber] = useState<number>(1)
+  const [showOrderSection, setShowOrderSection] = useState<boolean>(true)
+  const [showKitchenSection, setShowKitchenSection] = useState<boolean>(true)
+  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false)
+  const [confirmingItemId, setConfirmingItemId] = useState<number | null>(null)
 
-  // 次の利用可能なチケット番号を取得する関数
-  const getNextAvailableTicket = (item: 'リンゴ' | 'バナナ'): number | null => {
-    return availableTickets[item][0] || null
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen)
+  }
+
+  const getCardClassName = () => {
+    if (showOrderSection && showKitchenSection) {
+      return 'card'
+    } else {
+      return 'card full-width'
+    }
+  }
+
+  // Supabaseから注文を取得する関数
+  const fetchOrdersFromDatabase = async () => {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: true })
+  
+    if (error) {
+      console.error('注文の取得に失敗しました:', error.message)
+      return []
+    }
+  
+    return data.map((order: any) => ({
+      id: order.id,
+      item: order.item,
+      price: order.price,
+      ticketNumber: order.ticket_number
+    }))
+  }
+  
+  useEffect(() => {
+    // 初期注文の読み込み
+    const loadInitialOrders = async () => {
+      const orders = await fetchOrdersFromDatabase()
+      if (orders) {
+        setOrderItems(orders)
+      }
+    }
+    loadInitialOrders()
+
+    // リアルタイムリスナーの設定
+    const channel = supabase
+      .channel('orders')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, async () => {
+        const updatedOrders = await fetchOrdersFromDatabase()
+        if (updatedOrders) {
+          setOrderItems(updatedOrders)
+        }
+      })
+      .subscribe()
+
+    // クリーンアップ関数
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
+
+  // Supabaseへのデータ追加関数
+  const addOrderToDatabase = async (orderItems: OrderItem[]) => {
+    const { data, error } = await supabase
+      .from('orders')
+      .insert(orderItems.map(orderItem => ({
+        item: orderItem.item,
+        price: orderItem.price,
+        ticket_number: orderItem.ticketNumber,
+        status: 'pending'
+      })))
+
+    if (error) {
+      console.error('注文の追加に失敗しました:', error.message)
+    }
+  }
+
+  // Supabaseからのデータ削除関数
+  const removeOrderFromDatabase = async (id: number) => {
+    const { data, error } = await supabase
+      .from('orders')
+      .delete()
+      .eq('id', id)
+
+    if (error) {
+      console.error('注文の削除に失敗しました:', error.message)
+    }
   }
 
   // 一時的に注文を追加する関数
   const addTempItem = (item: 'リンゴ' | 'バナナ', price: number) => {
-    const ticketNumber = getNextAvailableTicket(item)
-    if (ticketNumber !== null) {
-      const newItem: OrderItem = { id: Date.now(), item, price, ticketNumber }
-      setTempOrderItems([...tempOrderItems, newItem])
-      setAvailableTickets(prev => ({
-        ...prev,
-        [item]: prev[item].filter(t => t !== ticketNumber)
-      }))
-    } else {
-      alert(`${item}の札が不足しています。`)
-    }
+    const ticketNumber = nextTicketNumber
+    const newItem: OrderItem = { id: Date.now(), item, price, ticketNumber }
+    setTempOrderItems([...tempOrderItems, newItem])
+    setNextTicketNumber(prev => (prev % TICKET_COUNT) + 1)
   }
 
   // 注文を確定する関数
-  const confirmOrder = () => {
-    setOrderItems([...orderItems, ...tempOrderItems])
+  const confirmOrder = async () => {
+    await addOrderToDatabase(tempOrderItems)
+    const updatedOrders = await fetchOrdersFromDatabase()
+    setOrderItems(updatedOrders)
     setTempOrderItems([])
   }
 
   // アイテムを削除する関数
-  const removeItem = (id: number) => {
-    const itemToRemove = orderItems.find(item => item.id === id)
-    if (itemToRemove && (itemToRemove.item === 'リンゴ' || itemToRemove.item === 'バナナ')) {
-      setAvailableTickets(prev => ({
-        ...prev,
-        [itemToRemove.item]: [...prev[itemToRemove.item], itemToRemove.ticketNumber].sort((a, b) => a - b)
-      }))
-    }
-    setOrderItems(orderItems.filter(item => item.id !== id))
+  const removeItem = async (id: number) => {
+    await removeOrderFromDatabase(id)
+    const updatedOrders = await fetchOrdersFromDatabase()
+    setOrderItems(updatedOrders)
+    setConfirmingItemId(null)
   }
 
   // 仮の注文をクリアする関数
   const clearTempOrder = () => {
-    tempOrderItems.forEach(item => {
-      if (item.item === 'リンゴ' || item.item === 'バナナ') {
-        setAvailableTickets(prev => ({
-          ...prev,
-          [item.item]: [...prev[item.item], item.ticketNumber].sort((a, b) => a - b)
-        }))
-      }
-    })
     setTempOrderItems([])
   }
 
@@ -86,13 +149,13 @@ export default function OrderManagement() {
 
   // 注文入力セクションのコンポーネント
   const OrderSection = () => (
-    <div className="card">
+    <div className={getCardClassName()}>
       <div className="card-header">
         <h2 className="card-title">注文入力</h2>
       </div>
       <div className="card-content">
         <div className="button-group">
-          <button onClick={() => addTempItem('リンゴ', 350)} className='apple' >リンゴ ¥350</button>
+          <button onClick={() => addTempItem('リンゴ', 350)} className='apple'>リンゴ ¥350</button>
           <button onClick={() => addTempItem('バナナ', 200)} className='banana'>バナナ ¥200</button>
         </div>
         <div className="item-list">
@@ -127,40 +190,59 @@ export default function OrderManagement() {
   )
 
   // 調理状況セクションのコンポーネント
-const KitchenSection = () => (
-  <div className="card">
-    <div className="card-header">
-      <h2 className="card-title">調理状況</h2>
-    </div>
-    <div className="card-content">
-      {orderItems.map((item) => (
-        <div
-          key={item.id}
-          className={`kitchen-item ${item.item === 'リンゴ' ? 'apple' : 'banana'}`}
-        >
-          <span>
-            {item.item} #{item.ticketNumber}
-          </span>
-          <div>
-            
-            <button className="serve-button" onClick={() => removeItem(item.id)}>
-              渡す
-            </button>
-          </div>
-        </div>
-      ))}
+  const KitchenSection = () => (
+    <div className={getCardClassName()} onClick={() => setConfirmingItemId(null)}>
+      <div className="card-header">
+        <h2 className="card-title">調理状況</h2>
+      </div>
       <div className="kitchen-total">
-        <span>調理中: {orderItems.length}</span>
+          <span>調理中: {orderItems.length}</span>
+      </div>
+      <div className="card-content">
+        {orderItems.map((item) => (
+          <div
+            key={item.id}
+            className={`kitchen-item ${item.item === 'リンゴ' ? 'apple' : 'banana'}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span>
+              {item.item} #{item.ticketNumber}
+            </span>
+            <div>
+              {confirmingItemId === item.id ? (
+                <button className="confirm-serve-button" onClick={() => removeItem(item.id)}>
+                  渡す
+                </button>
+              ) : (
+                <button className="serve-button" onClick={() => setConfirmingItemId(item.id)}>
+                  完成
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
-  </div>
-)
-
+  )
 
   return (
-    <div className="order-management">
-      <OrderSection />
-      <KitchenSection />
+    <div className="order-management">      
+      <button onClick={toggleMenu} className='hamburger-menu'>
+        ☰
+      </button>
+      {isMenuOpen && (
+         <div className="menu-items">
+          <button onClick={() => setShowOrderSection(!showOrderSection)} >
+            {showOrderSection ? '注文入力を非表示' : '注文入力を表示'}
+          </button>
+          <button onClick={() => setShowKitchenSection(!showKitchenSection)} >
+            {showKitchenSection ? '調理状況を非表示' : '調理状況を表示'}
+          </button>
+        </div>
+      )}
+
+      {showOrderSection && <OrderSection />}
+      {showKitchenSection && <KitchenSection />}
     </div>
   )
 }
