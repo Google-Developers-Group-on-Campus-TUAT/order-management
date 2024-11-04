@@ -19,7 +19,9 @@ export default function OrderManagement() {
   const [orderItems, setOrderItems] = useState<OrderItem[]>([])
   const [tempOrderItems, setTempOrderItems] = useState<OrderItem[]>([])
   const [tempTotal, setTempTotal] = useState<number>(0)
-  const [nextTicketNumber, setNextTicketNumber] = useState<number>(1)
+  // const [nextTicketNumber, setNextTicketNumber] = useState<number>(1)
+  const [nextAppleTicketNumber, setNextAppleTicketNumber] = useState<number>(1)
+  const [nextBananaTicketNumber, setNextBananaTicketNumber] = useState<number>(1)
   const [showOrderSection, setShowOrderSection] = useState<boolean>(true)
   const [showKitchenSection, setShowKitchenSection] = useState<boolean>(true)
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false)
@@ -114,10 +116,16 @@ export default function OrderManagement() {
 
   // 一時的に注文を追加する関数
   const addTempItem = (item: 'リンゴ' | 'バナナ', price: number) => {
-    const ticketNumber = nextTicketNumber
-    const newItem: OrderItem = { id: Date.now(), item, price, ticketNumber }
+    let ticketNumber: number
+    if (item === 'リンゴ') {
+      ticketNumber = nextAppleTicketNumber
+      setNextAppleTicketNumber(prev => (prev + 1) % TICKET_COUNT)
+    } else {
+      ticketNumber = nextBananaTicketNumber
+      setNextBananaTicketNumber(prev => (prev + 1) % TICKET_COUNT)
+    }
+    const newItem: OrderItem = { id: tempOrderItems.length, item, price, ticketNumber }
     setTempOrderItems([...tempOrderItems, newItem])
-    setNextTicketNumber(prev => (prev % TICKET_COUNT) + 1)
   }
 
   // 注文を確定する関数
