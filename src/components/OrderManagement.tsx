@@ -10,6 +10,7 @@ interface OrderItem {
   item: 'リンゴ' | 'バナナ'
   price: number
   ticketNumber: number
+  status: 'pending' | 'served'
 }
 
 const TICKET_COUNT = 50 // 札の総数
@@ -19,7 +20,6 @@ export default function OrderManagement() {
   const [orderItems, setOrderItems] = useState<OrderItem[]>([])
   const [tempOrderItems, setTempOrderItems] = useState<OrderItem[]>([])
   const [tempTotal, setTempTotal] = useState<number>(0)
-  // const [nextTicketNumber, setNextTicketNumber] = useState<number>(1)
   const [nextAppleTicketNumber, setNextAppleTicketNumber] = useState<number>(1)
   const [nextBananaTicketNumber, setNextBananaTicketNumber] = useState<number>(1)
   const [showOrderSection, setShowOrderSection] = useState<boolean>(true)
@@ -55,7 +55,8 @@ export default function OrderManagement() {
       id: order.id,
       item: order.item,
       price: order.price,
-      ticketNumber: order.ticket_number
+      ticketNumber: order.ticket_number,
+      status: order.status
     }))
   }
   
@@ -94,7 +95,7 @@ export default function OrderManagement() {
         item: orderItem.item,
         price: orderItem.price,
         ticket_number: orderItem.ticketNumber,
-        status: 'pending'
+        status: 'pending',
       })))
 
     if (error) {
@@ -132,7 +133,7 @@ export default function OrderManagement() {
       ticketNumber = data as number
     }
   
-    const newItem: OrderItem = { id: Date.now(), item, price, ticketNumber }
+    const newItem: OrderItem = { id: Date.now(), item, price, ticketNumber, status: 'pending' }
     setTempOrderItems([...tempOrderItems, newItem])
   }
   
@@ -146,7 +147,16 @@ export default function OrderManagement() {
 
   // アイテムを削除する関数
   const removeItem = async (id: number) => {
-    await removeOrderFromDatabase(id)
+    const { data, error } = await supabase
+      .from('orders')
+      .update({ status: 'served' })
+      .eq('id', id)
+
+    if (error) {
+      console.error('注文の更新に失敗しました:', error.message)
+      return
+    }
+
     const updatedOrders = await fetchOrdersFromDatabase()
     setOrderItems(updatedOrders)
     setConfirmingItemId(null)
@@ -162,6 +172,16 @@ export default function OrderManagement() {
     const newTempTotal = tempOrderItems.reduce((sum, item) => sum + item.price, 0)
     setTempTotal(newTempTotal)
   }, [tempOrderItems])
+
+  const serveOrder = (id: number) => {
+    setOrderItems(prevItems =>
+      prevItems.map(item =>
+        item.id === id ? { ...item, status: 'served' } : item
+      )
+    )
+  }
+
+  const pendingOrderItems = orderItems.filter(item => item.status === 'pending')
 
   // 注文入力セクションのコンポーネント
   const OrderSection = () => (
@@ -211,11 +231,16 @@ export default function OrderManagement() {
       <div className="card-header">
         <h2 className="card-title">調理状況</h2>
       </div>
-      <div className="kitchen-total">
-          <span>調理中: {orderItems.length}</span>
+      <div className="total-container">
+        <div className="ordered-total">
+          <span>今日の注文数: {orderItems.length}</span>
+        </div>
+        <div className="kitchen-total">
+          <span>調理中: {pendingOrderItems.length}</span>
+        </div>
       </div>
       <div className="card-content">
-        {orderItems.map((item) => (
+        {pendingOrderItems.map((item) => (
           <div
             key={item.id}
             className={`kitchen-item ${item.item === 'リンゴ' ? 'apple' : 'banana'}`}
