@@ -19,7 +19,9 @@ export default function OrderManagement() {
   const [orderItems, setOrderItems] = useState<OrderItem[]>([])
   const [tempOrderItems, setTempOrderItems] = useState<OrderItem[]>([])
   const [tempTotal, setTempTotal] = useState<number>(0)
-  const [nextTicketNumber, setNextTicketNumber] = useState<number>(1)
+  // const [nextTicketNumber, setNextTicketNumber] = useState<number>(1)
+  const [nextAppleTicketNumber, setNextAppleTicketNumber] = useState<number>(1)
+  const [nextBananaTicketNumber, setNextBananaTicketNumber] = useState<number>(1)
   const [showOrderSection, setShowOrderSection] = useState<boolean>(true)
   const [showKitchenSection, setShowKitchenSection] = useState<boolean>(true)
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false)
@@ -113,13 +115,27 @@ export default function OrderManagement() {
   }
 
   // 一時的に注文を追加する関数
-  const addTempItem = (item: 'リンゴ' | 'バナナ', price: number) => {
-    const ticketNumber = nextTicketNumber
+  const addTempItem = async (item: 'リンゴ' | 'バナナ', price: number) => {
+    let ticketNumber: number
+  
+    // 同じアイテムの一時的な追加があった場合は、前のチケット番号に1を加算
+    const lastItem = tempOrderItems.filter(orderItem => orderItem.item === item).pop()
+    if (lastItem) {
+      ticketNumber = lastItem.ticketNumber + 1
+    } else {
+      // サーバーからチケット番号を取得
+      const { data, error } = await supabase.rpc('get_next_ticket_number', { item_type: item })
+      if (error) {
+        console.error('チケット番号の取得に失敗しました:', error.message)
+        return
+      }
+      ticketNumber = data as number
+    }
+  
     const newItem: OrderItem = { id: Date.now(), item, price, ticketNumber }
     setTempOrderItems([...tempOrderItems, newItem])
-    setNextTicketNumber(prev => (prev % TICKET_COUNT) + 1)
   }
-
+  
   // 注文を確定する関数
   const confirmOrder = async () => {
     await addOrderToDatabase(tempOrderItems)
