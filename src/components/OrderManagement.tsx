@@ -192,7 +192,7 @@ export default function OrderManagement() {
       <div className="card-content">
         <div className="button-group">
           <button onClick={() => addTempItem('リンゴ', 350)} className='apple'>リンゴ ¥350</button>
-          <button onClick={() => addTempItem('バナナ', 200)} className='banana'>バナナ ¥200</button>
+          <button onClick={() => addTempItem('バナナ', 350)} className='banana'>バナナ ¥350</button>
         </div>
         <div className="item-list">
           {tempOrderItems.map((item) => (
