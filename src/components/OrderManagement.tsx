@@ -13,7 +13,7 @@ interface OrderItem {
   status: 'pending' | 'served'
 }
 
-const TICKET_COUNT = 5 // 札の総数
+const TICKET_COUNT = 50 // 札の総数
 
 export default function OrderManagement() {
   // Stateの型定義
