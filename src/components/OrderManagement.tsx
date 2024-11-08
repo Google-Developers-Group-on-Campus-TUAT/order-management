@@ -198,7 +198,7 @@ export default function OrderManagement() {
           {tempOrderItems.map((item) => (
             <div key={item.id} className="item">
               <span>
-                {item.item} #{item.ticketNumber}
+                {item.item} #{(item.ticketNumber - 1) % TICKET_COUNT + 1}
               </span>
               <span>¥{item.price}</span>
             </div>
@@ -247,7 +247,7 @@ export default function OrderManagement() {
             onClick={(e) => e.stopPropagation()}
           >
             <span>
-              {item.item} #{item.ticketNumber}
+              {item.item} #{(item.ticketNumber - 1) % TICKET_COUNT + 1}
             </span>
             <div>
               {confirmingItemId === item.id ? (
